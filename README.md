@@ -93,7 +93,7 @@ If you are a board manufacturer interested in getting your board officially supp
 * [STM32F4DISCOVERY](http://www.espruino.com/ReferenceSTM32F4DISCOVERY) - WORKING
 * STM32F401CDISCOVERY - appears WORKING, but very little testing done
 * STM32F429IDISCOVERY - WORKING over serial (A9/A10). No USB and no LCD support
-* NRF52832 Preview Development Kit - WORKING with limited functionality. Able to interface with Espruino over BLE (send commands from smartphone or computer) or serial as normal (send commands from chrome IDE or terminal).
+* [NRF52832DK] (docs/NRF52832DK.md) - WORKING
 * [HY STM32 2.4"](http://www.espruino.com/ReferenceHYSTM32_24) - WORKING
 * [HY STM32 2.8"](http://www.espruino.com/ReferenceHYSTM32_28) - WORKING - limited memory so some features removed
 * [HY STM32 3.2"](http://www.espruino.com/ReferenceHYSTM32_32) - WORKING
