@@ -538,6 +538,43 @@ void jswrap_nrf_bluetooth_setAdvertising(JsVar *data, JsVar *options) {
 /*JSON{
     "type" : "staticmethod",
     "class" : "NRF",
+    "name" : "setScanResponse",
+    "generate" : "jswrap_nrf_bluetooth_setScanResponse",
+    "params" : [
+      ["data","JsVar","The data to for the scan response"]
+    ]
+}
+
+The raw scan response data should be supplied as an array. For example to return "Sample" for the device name:
+
+```
+NRF.setScanResponse([0x07,  // Length of Data
+  0x09,  // Param: Complete Local Name
+  'S', 'a', 'm', 'p', 'l', 'e']);
+```
+*/
+void jswrap_nrf_bluetooth_setScanResponse(JsVar *data) {
+  uint32_t err_code;
+  
+  jsvObjectSetOrRemoveChild(execInfo.hiddenRoot, BLE_NAME_SCAN_RESPONSE_DATA, data);
+
+  if (jsvIsArray(data) || jsvIsArrayBuffer(data)) {
+    JSV_GET_AS_CHAR_ARRAY(dPtr, dLen, data);
+    if (!dPtr) {
+      jsExceptionHere(JSET_TYPEERROR, "Unable to convert data argument to an array");
+      return;
+    }
+
+    err_code = sd_ble_gap_adv_data_set(NULL, 0, (uint8_t *)dPtr, dLen);
+    jsble_check_error(err_code);
+  } else if (!jsvIsUndefined(data)) {
+    jsExceptionHere(JSET_TYPEERROR, "Expecting array-like object or undefined, got %t", data);
+  }
+}
+
+/*JSON{
+    "type" : "staticmethod",
+    "class" : "NRF",
     "name" : "setServices",
     "generate" : "jswrap_nrf_bluetooth_setServices",
     "params" : [
@@ -547,6 +584,9 @@ void jswrap_nrf_bluetooth_setAdvertising(JsVar *data, JsVar *options) {
 }
 
 Change the services and characteristics Espruino advertises.
+
+If you want to **change** the value of a characteristic, you need
+to use `NRF.updateServices()` instead
 
 To expose some information on Characteristic `ABCD` on service `BCDE` you could do:
 
@@ -889,7 +929,7 @@ void jswrap_nrf_bluetooth_setScan_cb(JsVar *callback, JsVar *adv) {
             }
           } else if (field_type == BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_MORE_AVAILABLE ||
                      field_type == BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_COMPLETE) {
-            JsVar *s = jsvVarPrintf("%04x", *(uint16_t*)&dPtr[i+2]);
+            JsVar *s = jsvVarPrintf("%04x", UNALIGNED_UINT16(&dPtr[i+2]));
             jsvArrayPushAndUnLock(services, s);
           } else if (field_type == BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_MORE_AVAILABLE ||
                      field_type == BLE_GAP_AD_TYPE_128BIT_SERVICE_UUID_COMPLETE) {
@@ -1037,20 +1077,18 @@ void jswrap_nrf_bluetooth_findDevices(JsVar *callback, JsVar *timeout) {
 }
 
 Start/stop listening for RSSI values on the currently active connection
-
-RSSI is the 'Received Signal Strength Indication' in dBm
+(where This device is a peripheral and is being connected to by a 'central' device)
 
 ```
 // Start scanning
 NRF.setRSSIHandler(function(rssi) {
-  console.log(rssi);
+  console.log(rssi); // prints -85 (or similar)
 });
-// prints -85 (or similar)
-
 // Stop Scanning
 NRF.setRSSIHandler();
 ```
 
+RSSI is the 'Received Signal Strength Indication' in dBm
 */
 void jswrap_nrf_bluetooth_setRSSIHandler(JsVar *callback) {
   // set the callback event variable
